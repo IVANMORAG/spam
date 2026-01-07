@@ -3,11 +3,11 @@ services:
     name: nsl-kdd-dashboard
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn nsl_kdd_project_v2.wsgi:application
+    startCommand: gunicorn core.wsgi:application
     envVars:
       - key: DEBUG
         value: "False"
       - key: PYTHON_VERSION
-        value: "3.11.9" # <-- CAMBIA ESTO
+        value: "3.11.9"
       - key: SECRET_KEY
         generateValue: true
