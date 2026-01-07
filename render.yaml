@@ -8,6 +8,6 @@ services:
       - key: DEBUG
         value: "False"
       - key: PYTHON_VERSION
-        value: "3.11.0"
+        value: "3.11.9" # <-- CAMBIA ESTO
       - key: SECRET_KEY
         generateValue: true
