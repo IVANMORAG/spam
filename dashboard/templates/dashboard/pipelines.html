@@ -1,0 +1,177 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Pipelines - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not dataset_exists %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Dataset no encontrado</h4>
+        <p>Coloca el archivo <code>KDDTrain+.arff</code> en la carpeta <code>data/</code></p>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-code-slash"></i> Pipelines y Transformadores Personalizados</h2>
+                </div>
+                <div class="card-body">
+                    <p>Automatización del preprocesamiento con pipelines de scikit-learn.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pipeline Numérico -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-diagram-2"></i> 1. Pipeline Numérico</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">from sklearn.pipeline import Pipeline
+from sklearn.impute import SimpleImputer
+from sklearn.preprocessing import RobustScaler
+
+num_pipeline = Pipeline([
+    ('imputer', SimpleImputer(strategy="median")),
+    ('rbst_scaler', RobustScaler()),
+])</code></pre>
+                    <div class="mt-3 d-flex align-items-center flex-wrap">
+                        <span class="badge bg-secondary p-2">Input: {{ num_count }} cols</span>
+                        <i class="bi bi-arrow-right mx-2"></i>
+                        <span class="badge bg-warning p-2">Imputer</span>
+                        <i class="bi bi-arrow-right mx-2"></i>
+                        <span class="badge bg-success p-2">RobustScaler</span>
+                        <i class="bi bi-arrow-right mx-2"></i>
+                        <span class="badge bg-primary p-2">Output: {{ num_count }} cols</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CustomOneHotEncoder -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-braces"></i> 2. CustomOneHotEncoder</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">class CustomOneHotEncoder(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self._oh = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+        self._columns = None
+
+    def fit(self, X, y=None):
+        X_cat = X.select_dtypes(include=['object'])
+        self._oh.fit(X_cat)
+        self._columns = self._oh.get_feature_names_out(X_cat.columns)
+        return self
+
+    def transform(self, X, y=None):
+        X_cat = X.select_dtypes(include=['object'])
+        X_cat_oh = self._oh.transform(X_cat)
+        return pd.DataFrame(X_cat_oh, columns=self._columns, index=X.index)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- DataFramePreparer -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-box-seam"></i> 3. DataFramePreparer (Pipeline Completo)</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">class DataFramePreparer(BaseEstimator, TransformerMixin):
+    def __init__(self):
+        self._full_pipeline = None
+
+    def fit(self, X, y=None):
+        num_attribs = list(X.select_dtypes(exclude=['object']).columns)
+        cat_attribs = list(X.select_dtypes(include=['object']).columns)
+        
+        self._full_pipeline = ColumnTransformer([
+            ("num", num_pipeline, num_attribs),
+            ("cat", CustomOneHotEncoder(), cat_attribs),
+        ])
+        self._full_pipeline.fit(X)
+        return self
+
+    def transform(self, X, y=None):
+        return self._full_pipeline.transform(X)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uso -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-play-circle"></i> 4. Uso del Pipeline</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python"># Crear y ajustar
+preparer = DataFramePreparer()
+X_train_prep = preparer.fit_transform(X_train)
+
+# Solo transformar (sin fit!)
+X_val_prep = preparer.transform(X_val)
+X_test_prep = preparer.transform(X_test)</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ventajas -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="bi bi-stars"></i> Ventajas de Pipelines</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="alert alert-primary">
+                                <h6><i class="bi bi-arrow-repeat"></i> Reproducibilidad</h6>
+                                <small>Mismas transformaciones siempre</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-success">
+                                <h6><i class="bi bi-shield-check"></i> Sin Data Leakage</h6>
+                                <small>fit() solo en train</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-warning">
+                                <h6><i class="bi bi-code-square"></i> Código Limpio</h6>
+                                <small>Todo encapsulado</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-save"></i> Serializable</h6>
+                                <small>Guardar con joblib</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

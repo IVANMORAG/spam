@@ -1,0 +1,234 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Introducción - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-info-circle"></i> Introducción al Proyecto</h2>
+                </div>
+                <div class="card-body">
+                    <h3>Detección de Intrusiones de Red con Machine Learning</h3>
+                    <p class="lead">
+                        Este proyecto implementa técnicas de Machine Learning para la detección de intrusiones 
+                        en redes de computadoras utilizando el dataset NSL-KDD.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-database"></i> Dataset NSL-KDD</h4>
+                </div>
+                <div class="card-body">
+                    <h5>Descripción</h5>
+                    <p>
+                        <strong>ISCX NSL-KDD dataset 2009</strong> es un conjunto de datos propuesto para resolver 
+                        algunos de los problemas inherentes del dataset KDD'99.
+                    </p>
+                    <p>
+                        Aunque esta nueva versión aún sufre de algunos problemas, debido a la falta de conjuntos 
+                        de datos públicos para IDS basados en red, sigue siendo un benchmark efectivo para 
+                        comparar diferentes métodos de detección de intrusiones.
+                    </p>
+                    
+                    <h5 class="mt-4">Ventajas del NSL-KDD</h5>
+                    <ul>
+                        <li>No incluye registros redundantes en el conjunto de entrenamiento</li>
+                        <li>No hay registros duplicados en los conjuntos de prueba</li>
+                        <li>El número de registros seleccionados de cada nivel de dificultad es inversamente proporcional al porcentaje del dataset original</li>
+                        <li>El número de registros es razonable para ejecutar experimentos en el conjunto completo</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-file-earmark-text"></i> Archivos del Dataset</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Archivo</th>
+                                <th>Descripción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="table-success">
+                                <td><code>KDDTrain+.ARFF</code></td>
+                                <td>Conjunto completo de entrenamiento con etiquetas binarias</td>
+                            </tr>
+                            <tr>
+                                <td><code>KDDTrain+.TXT</code></td>
+                                <td>Incluye etiquetas de tipo de ataque y nivel de dificultad</td>
+                            </tr>
+                            <tr>
+                                <td><code>KDDTrain+_20Percent.ARFF</code></td>
+                                <td>Subconjunto del 20% del archivo de entrenamiento</td>
+                            </tr>
+                            <tr>
+                                <td><code>KDDTest+.ARFF</code></td>
+                                <td>Conjunto completo de prueba</td>
+                            </tr>
+                            <tr>
+                                <td><code>KDDTest-21.ARFF</code></td>
+                                <td>Subconjunto sin registros de nivel de dificultad 21</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-graph-up"></i> Estadísticas - Conjunto de Entrenamiento</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Registros Originales</th>
+                                <th>Registros Distintos</th>
+                                <th>Reducción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ataques</td>
+                                <td>3,925,650</td>
+                                <td>262,178</td>
+                                <td><span class="badge bg-danger">93.32%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Normal</td>
+                                <td>972,781</td>
+                                <td>812,814</td>
+                                <td><span class="badge bg-success">16.44%</span></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Total</strong></td>
+                                <td><strong>4,898,431</strong></td>
+                                <td><strong>1,074,992</strong></td>
+                                <td><span class="badge bg-primary">78.05%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-graph-down"></i> Estadísticas - Conjunto de Prueba</h4>
+                </div>
+                <div class="card-body">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Tipo</th>
+                                <th>Registros Originales</th>
+                                <th>Registros Distintos</th>
+                                <th>Reducción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Ataques</td>
+                                <td>250,436</td>
+                                <td>29,378</td>
+                                <td><span class="badge bg-danger">88.26%</span></td>
+                            </tr>
+                            <tr>
+                                <td>Normal</td>
+                                <td>60,591</td>
+                                <td>47,911</td>
+                                <td><span class="badge bg-success">20.92%</span></td>
+                            </tr>
+                            <tr class="table-primary">
+                                <td><strong>Total</strong></td>
+                                <td><strong>311,027</strong></td>
+                                <td><strong>77,289</strong></td>
+                                <td><span class="badge bg-primary">75.15%</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-shield-exclamation"></i> Tipos de Ataques</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="alert alert-danger">
+                                <h6><i class="bi bi-exclamation-triangle"></i> DoS (Denial of Service)</h6>
+                                <small>neptune, smurf, back, teardrop, pod, land</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-warning">
+                                <h6><i class="bi bi-search"></i> Probe</h6>
+                                <small>portsweep, ipsweep, nmap, satan</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-info">
+                                <h6><i class="bi bi-person-x"></i> R2L (Remote to Local)</h6>
+                                <small>warezclient, guess_passwd, warezmaster, imap, ftp_write</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="alert alert-dark">
+                                <h6><i class="bi bi-person-fill-up"></i> U2R (User to Root)</h6>
+                                <small>buffer_overflow, rootkit, loadmodule, perl</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="bi bi-link-45deg"></i> Referencias</h4>
+                </div>
+                <div class="card-body">
+                    <p>
+                        <strong>Referencia:</strong> M. Tavallaee, E. Bagheri, W. Lu, and A. Ghorbani, 
+                        "A Detailed Analysis of the KDD CUP 99 Data Set," Second IEEE Symposium on 
+                        Computational Intelligence for Security and Defense Applications (CISDA), 2009.
+                    </p>
+                    <a href="https://www.unb.ca/cic/datasets/nsl.html" target="_blank" class="btn btn-primary">
+                        <i class="bi bi-box-arrow-up-right"></i> Link de Descarga del Dataset
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

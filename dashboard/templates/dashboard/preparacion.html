@@ -1,0 +1,177 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Preparación - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not dataset_exists %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Dataset no encontrado</h4>
+        <p>Coloca el archivo <code>KDDTrain+.arff</code> en la carpeta <code>data/</code></p>
+    </div>
+    {% elif error %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Error: {{ error }}</h4>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-gear"></i> Preparación del Dataset</h2>
+                </div>
+                <div class="card-body">
+                    <p>Técnicas de transformación y preparación de datos para Machine Learning.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Atributos -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-123"></i> Atributos Numéricos ({{ num_count }})</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for attr in num_attribs %}
+                        <div class="col-6 col-md-4">
+                            <span class="badge bg-primary mb-1">{{ attr }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-tag"></i> Atributos Categóricos ({{ cat_count }})</h4>
+                </div>
+                <div class="card-body">
+                    {% for attr, unique in cat_unique.items %}
+                    <div class="mb-3">
+                        <h6><code>{{ attr }}</code> <span class="badge bg-secondary">{{ unique }} valores únicos</span></h6>
+                        <small class="text-muted">
+                            {% for val in cat_values|get_item:attr %}
+                            <span class="badge bg-light text-dark">{{ val }}</span>
+                            {% endfor %}
+                            {% if cat_unique|get_item:attr > 10 %}...{% endif %}
+                        </small>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Técnicas -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-wrench"></i> SimpleImputer</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code>from sklearn.impute import SimpleImputer
+
+imputer = SimpleImputer(strategy="median")
+X_imputed = imputer.fit_transform(X_train_num)</code></pre>
+                    <div class="alert alert-info mt-2">
+                        Reemplaza valores NaN con la <strong>mediana</strong> de cada columna.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-rulers"></i> RobustScaler</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code>from sklearn.preprocessing import RobustScaler
+
+scaler = RobustScaler()
+X_scaled = scaler.fit_transform(X_train_num)</code></pre>
+                    <div class="alert alert-warning mt-2">
+                        Usa mediana e IQR, <strong>resistente a outliers</strong>.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-grid-3x3-gap"></i> OneHotEncoder</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code>from sklearn.preprocessing import OneHotEncoder
+
+encoder = OneHotEncoder(sparse_output=False)
+X_cat_encoded = encoder.fit_transform(X_train[cat_attribs])
+
+# Resultado: {{ cat_count }} columnas -> ~80+ columnas binarias</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="bi bi-list-check"></i> Resumen de Transformaciones</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-primary">{{ num_count|add:cat_count }}</h3>
+                                    <small>Features originales</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-success">{{ num_count }}</h3>
+                                    <small>Atributos escalados</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-warning">~80+</h3>
+                                    <small>Después de One-Hot</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-light">
+                                <div class="card-body">
+                                    <h3 class="text-info">0</h3>
+                                    <small>NaN restantes</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}

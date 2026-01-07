@@ -1,0 +1,246 @@
+{% extends 'dashboard/base.html' %}
+
+{% block title %}Visualización - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not dataset_exists %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Dataset no encontrado</h4>
+        <p>Coloca el archivo <code>KDDTrain+.arff</code> en la carpeta <code>data/</code></p>
+    </div>
+    {% elif error %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Error</h4>
+        <p>{{ error }}</p>
+    </div>
+    {% else %}
+    
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-bar-chart"></i> Visualización del Dataset</h2>
+                </div>
+                <div class="card-body">
+                    <p>Dataset cargado: <strong>{{ total_rows }}</strong> registros, <strong>{{ total_cols }}</strong> columnas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- df.head() -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-table"></i> df.head(10)</h4>
+                </div>
+                <div class="card-body table-responsive">
+                    <table class="table table-striped table-sm" style="font-size: 0.8rem;">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>#</th>
+                                {% for col in head_columns %}
+                                <th>{{ col|truncatechars:10 }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in head_data %}
+                            <tr>
+                                <td>{{ forloop.counter0 }}</td>
+                                {% for col in head_columns %}
+                                <td>{{ row|get_item:col|default:"-"|truncatechars:8 }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-info-circle"></i> Información del Dataset</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total de registros</span>
+                            <strong>{{ total_rows }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Total de columnas</span>
+                            <strong>{{ total_cols }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Columnas numéricas</span>
+                            <strong>{{ num_cols }}</strong>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between">
+                            <span>Columnas categóricas</span>
+                            <strong>{{ cat_cols }}</strong>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-pie-chart"></i> Distribución de Clases</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="classDistChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficas -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-bar-chart-line"></i> Distribución de Protocolos</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="protocolChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-bar-chart-line"></i> Top 10 Servicios</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="serviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Value counts -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Conteo de Clases</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        {% for class, count in class_counts.items %}
+                        <tr>
+                            <td>{{ class }}</td>
+                            <td><span class="badge bg-{% if class == 'normal' %}success{% else %}danger{% endif %}">{{ count }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Conteo de Protocolos</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        {% for protocol, count in protocol_counts.items %}
+                        <tr>
+                            <td>{{ protocol }}</td>
+                            <td><span class="badge bg-primary">{{ count }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Conteo de Flags</h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        {% for flag, count in flag_counts.items %}
+                        <tr>
+                            <td>{{ flag }}</td>
+                            <td><span class="badge bg-secondary">{{ count }}</span></td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if dataset_exists and not error %}
+<script>
+const classData = JSON.parse('{{ class_counts|escapejs }}' || '{}');
+const protocolData = JSON.parse('{{ protocol_counts|escapejs }}' || '{}');
+const serviceData = JSON.parse('{{ service_counts|escapejs }}' || '{}');
+
+// Gráfica de clases
+new Chart(document.getElementById('classDistChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(classData),
+        datasets: [{
+            data: Object.values(classData),
+            backgroundColor: ['#198754', '#dc3545', '#ffc107', '#0dcaf0', '#6c757d', '#fd7e14', '#6f42c1', '#20c997', '#d63384', '#0d6efd']
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+// Gráfica de protocolos
+new Chart(document.getElementById('protocolChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(protocolData),
+        datasets: [{
+            label: 'Cantidad',
+            data: Object.values(protocolData),
+            backgroundColor: ['#0d6efd', '#198754', '#dc3545']
+        }]
+    },
+    options: { responsive: true, plugins: { legend: { display: false } } }
+});
+
+// Gráfica de servicios
+new Chart(document.getElementById('serviceChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(serviceData),
+        datasets: [{
+            label: 'Cantidad',
+            data: Object.values(serviceData),
+            backgroundColor: '#6f42c1'
+        }]
+    },
+    options: { 
+        responsive: true, 
+        indexAxis: 'y',
+        plugins: { legend: { display: false } } 
+    }
+});
+</script>
+{% endif %}
+{% endblock %}

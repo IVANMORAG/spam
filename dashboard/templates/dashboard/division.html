@@ -1,0 +1,199 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}División del Dataset - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not dataset_exists %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Dataset no encontrado</h4>
+        <p>Coloca el archivo <code>KDDTrain+.arff</code> en la carpeta <code>data/</code></p>
+    </div>
+    {% elif error %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Error: {{ error }}</h4>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-diagram-3"></i> División del Dataset</h2>
+                </div>
+                <div class="card-body">
+                    <p>División estratificada usando <code>protocol_type</code> con proporciones 60/20/20</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tamaños de conjuntos -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white mb-4">
+                <div class="card-body text-center">
+                    <h2>{{ train_size|default:0 }}</h2>
+                    <p class="mb-0">Train Set (60%)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white mb-4">
+                <div class="card-body text-center">
+                    <h2>{{ val_size|default:0 }}</h2>
+                    <p class="mb-0">Validation Set (20%)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-warning text-dark mb-4">
+                <div class="card-body text-center">
+                    <h2>{{ test_size|default:0 }}</h2>
+                    <p class="mb-0">Test Set (20%)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Código -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-code-slash"></i> Función de División</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">def train_val_test_split(df, rstate=42, shuffle=True, stratify=None):
+    strat = df[stratify] if stratify else None 
+    train_set, test_set = train_test_split(
+        df, test_size=0.4, random_state=rstate, shuffle=shuffle, stratify=strat)
+    strat = test_set[stratify] if stratify else None 
+    val_set, test_set = train_test_split(
+        test_set, test_size=0.5, random_state=rstate, shuffle=shuffle, stratify=strat)
+    return (train_set, val_set, test_set)
+
+# Uso:
+train_set, val_set, test_set = train_val_test_split(df, stratify="protocol_type")</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Distribución por protocolo -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Train Set - Protocolos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="trainChart"></canvas>
+                    <table class="table table-sm mt-3">
+                        {% for proto, count in train_protocol.items %}
+                        <tr>
+                            <td>{{ proto }}</td>
+                            <td>{{ count }} ({{ train_pct|get_item:proto }}%)</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Validation Set - Protocolos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="valChart"></canvas>
+                    <table class="table table-sm mt-3">
+                        {% for proto, count in val_protocol.items %}
+                        <tr>
+                            <td>{{ proto }}</td>
+                            <td>{{ count }} ({{ val_pct|get_item:proto }}%)</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Test Set - Protocolos</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="testChart"></canvas>
+                    <table class="table table-sm mt-3">
+                        {% for proto, count in test_protocol.items %}
+                        <tr>
+                            <td>{{ proto }}</td>
+                            <td>{{ count }} ({{ test_pct|get_item:proto }}%)</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Info adicional -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="bi bi-info-circle"></i> Información de Features</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <strong>Total de features:</strong> {{ total_features }} (después de eliminar la columna 'class')
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if dataset_exists and not error %}
+<script>
+const trainData = JSON.parse('{{ train_protocol|to_json|escapejs }}' || '{}');
+const valData = JSON.parse('{{ val_protocol|to_json|escapejs }}' || '{}');
+const testData = JSON.parse('{{ test_protocol|to_json|escapejs }}' || '{}');
+
+const colors = ['#0d6efd', '#198754', '#dc3545'];
+
+new Chart(document.getElementById('trainChart'), {
+    type: 'pie',
+    data: {
+        labels: Object.keys(trainData),
+        datasets: [{ data: Object.values(trainData), backgroundColor: colors }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('valChart'), {
+    type: 'pie',
+    data: {
+        labels: Object.keys(valData),
+        datasets: [{ data: Object.values(valData), backgroundColor: colors }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+
+new Chart(document.getElementById('testChart'), {
+    type: 'pie',
+    data: {
+        labels: Object.keys(testData),
+        datasets: [{ data: Object.values(testData), backgroundColor: colors }]
+    },
+    options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+{% endif %}
+{% endblock %}

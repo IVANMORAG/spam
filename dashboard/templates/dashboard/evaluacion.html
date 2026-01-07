@@ -1,0 +1,239 @@
+{% extends 'dashboard/base.html' %}
+{% load custom_filters %}
+
+{% block title %}Evaluación - NSL-KDD Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {% if not dataset_exists %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Dataset no encontrado</h4>
+        <p>Coloca el archivo <code>KDDTrain+.arff</code> en la carpeta <code>data/</code></p>
+    </div>
+    {% elif error %}
+    <div class="alert alert-danger">
+        <h4><i class="bi bi-exclamation-triangle"></i> Error</h4>
+        <p>{{ error }}</p>
+    </div>
+    {% else %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h2><i class="bi bi-clipboard-data"></i> Evaluación de Resultados</h2>
+                </div>
+                <div class="card-body">
+                    <p>Modelo: <strong>Regresión Logística</strong> | Predicciones: <strong>{{ total_predictions }}</strong></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Métricas principales -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card text-center bg-primary text-white mb-4">
+                <div class="card-body">
+                    <h1>{{ accuracy }}%</h1>
+                    <p class="mb-0">Accuracy</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-success text-white mb-4">
+                <div class="card-body">
+                    <h1>{{ precision_macro }}%</h1>
+                    <p class="mb-0">Precision (macro)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-warning text-dark mb-4">
+                <div class="card-body">
+                    <h1>{{ recall_macro }}%</h1>
+                    <p class="mb-0">Recall (macro)</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-center bg-info text-white mb-4">
+                <div class="card-body">
+                    <h1>{{ f1_macro }}%</h1>
+                    <p class="mb-0">F1-Score (macro)</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Código del modelo -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-code-slash"></i> Entrenamiento del Modelo</h4>
+                </div>
+                <div class="card-body">
+                    <pre><code class="language-python">from sklearn.linear_model import LogisticRegression
+
+clf = LogisticRegression(max_iter=5000)
+clf.fit(X_train_prep, y_train)
+
+y_pred = clf.predict(X_val_prep)
+accuracy = accuracy_score(y_val, y_pred)
+print(f"Accuracy: {accuracy:.4f}")</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Classification Report -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-table"></i> Classification Report</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Clase</th>
+                                    <th>Precision</th>
+                                    <th>Recall</th>
+                                    <th>F1-Score</th>
+                                    <th>Support</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for class, metrics in class_metrics.items %}
+                                <tr>
+                                    <td><strong>{{ class }}</strong></td>
+                                    <td>{{ metrics.precision }}</td>
+                                    <td>{{ metrics.recall }}</td>
+                                    <td>{{ metrics.f1 }}</td>
+                                    <td>{{ metrics.support }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-graph-up"></i> Métricas por Clase</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="metricsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Matriz de confusión -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4><i class="bi bi-grid-3x3"></i> Matriz de Confusión (Top clases)</h4>
+                </div>
+                <div class="card-body">
+                    <canvas id="confusionChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Conclusiones -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4><i class="bi bi-check2-all"></i> Conclusiones</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5 class="text-success"><i class="bi bi-hand-thumbs-up"></i> Fortalezas</h5>
+                            <ul>
+                                <li>Accuracy de {{ accuracy }}% en validación</li>
+                                <li>Alta precisión en clases mayoritarias</li>
+                                <li>Modelo simple y rápido de entrenar</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <h5 class="text-warning"><i class="bi bi-exclamation-triangle"></i> Áreas de Mejora</h5>
+                            <ul>
+                                <li>Explorar Random Forest, XGBoost</li>
+                                <li>Balancear clases minoritarias</li>
+                                <li>Feature engineering adicional</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+{% if dataset_exists and not error %}
+<script>
+const classMetrics = JSON.parse('{{ class_metrics|to_json|escapejs }}' || '{}');
+const cmData = JSON.parse('{{ cm_data|to_json|escapejs }}' || '{}');
+
+// Gráfica de métricas por clase
+const labels = Object.keys(classMetrics);
+const precisions = labels.map(l => classMetrics[l].precision);
+const recalls = labels.map(l => classMetrics[l].recall);
+const f1s = labels.map(l => classMetrics[l].f1);
+
+new Chart(document.getElementById('metricsChart'), {
+    type: 'bar',
+    data: {
+        labels: labels,
+        datasets: [
+            { label: 'Precision', data: precisions, backgroundColor: '#198754' },
+            { label: 'Recall', data: recalls, backgroundColor: '#ffc107' },
+            { label: 'F1', data: f1s, backgroundColor: '#0dcaf0' }
+        ]
+    },
+    options: { 
+        responsive: true,
+        scales: { y: { beginAtZero: true, max: 1 } }
+    }
+});
+
+// Matriz de confusión simplificada
+if (cmData.labels && cmData.matrix) {
+    const cmLabels = cmData.labels.slice(0, 5);
+    const datasets = cmLabels.map((label, i) => ({
+        label: label,
+        data: cmData.matrix[i] ? cmData.matrix[i].slice(0, 5) : [],
+        backgroundColor: `hsl(${i * 60}, 70%, 50%)`
+    }));
+
+    new Chart(document.getElementById('confusionChart'), {
+        type: 'bar',
+        data: {
+            labels: cmLabels,
+            datasets: datasets
+        },
+        options: {
+            responsive: true,
+            scales: { x: { stacked: true }, y: { stacked: true } },
+            plugins: { title: { display: true, text: 'Predicciones por clase' } }
+        }
+    });
+}
+</script>
+{% endif %}
+{% endblock %}
